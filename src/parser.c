@@ -1,19 +1,34 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "../include/parser.h"
 
-#include <string.h>
+char* parser(char *input)   {
 
-char* parser(char* input){
+    if (!strcmp(input, "PING\n"))   {
+        printf("here\n");
 
-    if(!strcmp(input, "PING"))   {
-        return "PONG";
+        char * response = malloc((strlen("PONG") + 2) * sizeof(char));
+
+        strcpy(response, "PONG");
+
+        return response;
+    }
+    else    {
+        printf("la\n");
+
+        char * response = malloc((strlen(input) + 2) * sizeof(char));
+        strcpy(response, input);
+
+        return response;
     }
 
-    return '\0'   ;
+    return NULL;
 
 }
 
-void clearBuffer(char *buffer){
+void clearBuffer(char *buffer)  {
 
     for(int i = 0; i < strlen(buffer) ; ++i){
         buffer[i] = '\0';

@@ -93,13 +93,24 @@ int main(int argc, char const *argv[])
             while (1)
             {
 
-                char buffer[128];
-                clearBuffer(buffer);
+                char buffer[16];
 
-                int size = recv(client_fd, buffer, 127, 0);
-                // printf("%s\n", buffer);
+                int size = recv(client_fd, buffer, 15, 0);
 
-                write(client_fd, buffer, size);
+                buffer[size] = '\0';
+
+                char * response = parser(buffer);
+
+                if (response != NULL)   {
+                    if (write(client_fd, response, size) != -1) {
+                        printf("sucess\n");
+                    }
+                    else    {
+                        printf("failed\n");
+                    }
+
+                    free(response);
+                }
 
                 // sleep(5);
                 if (!strcmp(buffer, "exit"))
@@ -108,9 +119,6 @@ int main(int argc, char const *argv[])
                     close(client_fd);
                     exit(0);
                 }
-				
-				buffer[0] = '\0';
-
             }
         }
     }
