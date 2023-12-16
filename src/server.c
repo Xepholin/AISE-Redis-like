@@ -114,18 +114,14 @@ int main(int argc, char const *argv[])
                     char buffer[128];
 
                     int size = recv(client_fd, buffer, 127, 0);
-                    printf("size: %d\n", size);
 
                     buffer[size] = '\0';
-                    printf("buffer: %s\n", buffer);
-                    char *response = command(buffer);
-                    strcpy(buffer, response);
-                    free(response);
 
-                    printf("buffer: %s\n", buffer);
-                    if (buffer != NULL)   {
+                    char *response = command(buffer);
+
+                    if (response != NULL)   {
                         
-                        if (write(client_fd, buffer, size) != -1) {
+                        if (write(client_fd, response, strlen(response)) != -1) {
                             // printf("sucess\n");
                         }
                         else    {
@@ -140,6 +136,8 @@ int main(int argc, char const *argv[])
                         close(client_fd);
                         exit(0);
                     }
+
+                    free(response);
                 }
             }
         }

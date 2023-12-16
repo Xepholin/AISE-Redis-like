@@ -42,11 +42,8 @@ char *command(char *input) {
                 for (int j = 1; j < nb_commands; ++j)  {
                     if (!strcmp(commands[i][j], parsed[1]))   {
                         if (!strcmp(parsed[1], "PING"))  {
-                            response = malloc((strlen("*1\r\n$4\r\nPONG\r\n") + 2) * sizeof(char));
-                            strcpy(response, "*1\r\n$4\r\nPONG\r\n");
-                            // response = malloc((strlen("+PONG\r\n") + 1) * sizeof(char));
-                            // strcpy(response, "+PONG\r\n");
-                            printf("len: %ld\n", strlen(response));
+                            response = malloc((strlen("+PONG\r\n") + 1) * sizeof(char));
+                            strcpy(response, "+PONG\r\n");
                         }
 
                         int nbArgs = atoi(parsed[0])+1;
