@@ -111,19 +111,21 @@ int main(int argc, char const *argv[])
                     firstIter++;
                 }
                 else    {
-                    printf("response: begin\n");
                     char buffer[128];
 
                     int size = recv(client_fd, buffer, 127, 0);
-                    printf("input: %s\n", buffer);
+                    printf("size: %d\n", size);
 
                     buffer[size] = '\0';
-
+                    printf("buffer: %s\n", buffer);
                     char *response = command(buffer);
+                    strcpy(buffer, response);
+                    free(response);
 
-                    if (response != NULL)   {
+                    printf("buffer: %s\n", buffer);
+                    if (buffer != NULL)   {
                         
-                        if (write(client_fd, response, size) != -1) {
+                        if (write(client_fd, buffer, size) != -1) {
                             // printf("sucess\n");
                         }
                         else    {
@@ -138,8 +140,6 @@ int main(int argc, char const *argv[])
                         close(client_fd);
                         exit(0);
                     }
-                    printf("response: end\n");
-                    free(response);
                 }
             }
         }

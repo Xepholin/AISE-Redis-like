@@ -41,9 +41,12 @@ char *command(char *input) {
 
                 for (int j = 1; j < nb_commands; ++j)  {
                     if (!strcmp(commands[i][j], parsed[1]))   {
-                        if (strcmp(parsed[1], "PING\n"))  {
+                        if (!strcmp(parsed[1], "PING"))  {
                             response = malloc((strlen("*1\r\n$4\r\nPONG\r\n") + 2) * sizeof(char));
                             strcpy(response, "*1\r\n$4\r\nPONG\r\n");
+                            // response = malloc((strlen("+PONG\r\n") + 1) * sizeof(char));
+                            // strcpy(response, "+PONG\r\n");
+                            printf("len: %ld\n", strlen(response));
                         }
 
                         int nbArgs = atoi(parsed[0])+1;
@@ -63,13 +66,13 @@ char *command(char *input) {
 
                 for (int j = 1; j < nb_commands; ++j)  {
                     if (!strcmp(commands[i][j], parsed[1]))   {
-                        if (strcmp(parsed[1], "GET\n"))  {
+                        if (!strcmp(parsed[1], "GET"))  {
 
                         }
-                        else if (strcmp(parsed[1], "SET\n"))  {
+                        else if (!strcmp(parsed[1], "SET"))  {
 
                         }
-                        else if (strcmp(parsed[1], "DEL\n"))  {
+                        else if (!strcmp(parsed[1], "DEL"))  {
 
                         }
 
@@ -91,8 +94,8 @@ char *command(char *input) {
         }
     }
 
-    response = malloc((strlen("*1\r\n$9\r\nNOT_FOUND\r\n") + 2) * sizeof(char));
-    strcpy(response, "*1\r\n$9\r\nNOT_FOUND\r\n");
+    response = malloc((strlen("+NOT_FOUND\r\n") + 1) * sizeof(char));
+    strcpy(response, "+NOT_FOUND\r\n");
 
     int nbArgs = atoi(parsed[0])+1;
     free_arrayString(parsed, nbArgs);
