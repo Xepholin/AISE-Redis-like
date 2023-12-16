@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "../include/parser.h"
 
@@ -84,19 +85,27 @@ void getLenArgs(int *lenArgs, char *input, int nbArgs)
 
 char **getStrings(int *lenArgs, int nbArgs, char *input)
 {
-
     int size = strlen(input);
-    char **strVal = malloc(sizeof(char *) * nbArgs);
+    char **strVal = malloc(sizeof(char *) * nbArgs + 1);
 
-    for (int i = 0; i < nbArgs; ++i)
+    int nbArgsStringLen = (int)((ceil(log10(nbArgs))+1)*sizeof(char));
+
+    char nbArgsString[nbArgsStringLen];
+    sprintf(nbArgsString, "%d", nbArgsStringLen);
+
+    strVal[0] = malloc(sizeof(char) * nbArgsStringLen);
+
+    for (int i = 1; i < nbArgs+1; ++i)
     {
-        strVal[i] = malloc(sizeof(char) * (lenArgs[i] + 1));
+        strVal[i] = malloc(sizeof(char) * (lenArgs[i-1] + 1));
     }
+
+    strcpy(strVal[0], nbArgsString);
 
     int currentNb = 0;
     int i = 0;
 
-    while ((currentNb < nbArgs) && (i < size))
+    while ((currentNb < nbArgs+1) && (i < size))
     {
         if (input[i] == '$')
         {
@@ -121,7 +130,7 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
             }
             tmp[lenArgs[currentNb]] = '\0';
 
-            strcpy(strVal[currentNb], tmp);
+            strcpy(strVal[currentNb+1], tmp);
 
             currentNb++;
         }
@@ -130,17 +139,8 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
     return strVal;
 }
 
-void free_arrayString(char **parsedStr, int nbArgs)
+char **parser(char *input)
 {
-    for (int i = 0; i < nbArgs; i++)
-    {
-        free(parsedStr[i]);
-    }
-}
-char *parser(char *input)
-{
-
-    printf("input redis :\n %s\n\n", input);
 
     int numberOfArgs = getNumberArgs(input);
     int lenArgs[numberOfArgs];
@@ -148,33 +148,5 @@ char *parser(char *input)
 
     char **parsedStr = getStrings(lenArgs, numberOfArgs, input);
 
-    printf("nb args : %d\n", numberOfArgs);
-    for (int i = 0; i < numberOfArgs; ++i)
-    {
-        printf("parsed values : %s\n", parsedStr[i]);
-    }
-
-    if (!strcmp(input, "PING\n"))
-    {
-
-        char *response = malloc((strlen("PONG") + 2) * sizeof(char));
-
-        strcpy(response, "PONG");
-
-        free_arrayString(parsedStr, numberOfArgs);
-        return response;
-    }
-    else
-    {
-
-        char *response = malloc((strlen(input) + 2) * sizeof(char));
-        strcpy(response, input);
-        free_arrayString(parsedStr, numberOfArgs);
-
-        return response;
-    }
-
-    free_arrayString(parsedStr, numberOfArgs);
-
-    return NULL;
+    return parsedStr;
 }

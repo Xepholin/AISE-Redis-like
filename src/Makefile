@@ -6,8 +6,8 @@ OFLAGS = -Wall -O3
 all: server
 
 
-server: parser.o server.o
-	$(CC) $(OFLAGS) $^ -o $@
+server: parser.o command.o server.o
+	$(CC) $(OFLAGS) $^ -o $@ -lm
 
 %.o: %.c
 	$(CC) $(OFLAGS) -c $< -o $@

@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "../include/parser.h"
+#include "../include/command.h"
 
 int main(int argc, char const *argv[])
 {
@@ -99,7 +100,7 @@ int main(int argc, char const *argv[])
 
                 buffer[size] = '\0';
 
-                char * response = parser(buffer);
+                char * response = command(buffer);
 
                 if (response != NULL)   {
                     if (write(client_fd, response, size) != -1) {
@@ -109,7 +110,7 @@ int main(int argc, char const *argv[])
                         // printf("failed\n");
                     }
 
-                    free(response);
+                    //free(response);
                 }
 
                 // sleep(5);
