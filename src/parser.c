@@ -16,7 +16,7 @@ void clearBuffer(char *buffer)
 
 int getNumberArgs(char *input)
 {
-
+    printf("input: %s\n", input);
     char *args = malloc(strlen(input) * sizeof(char) + 1);
 
     for (int i = 0; i < strlen(input); ++i)
@@ -25,7 +25,7 @@ int getNumberArgs(char *input)
         {
             i++;
             int j = 0;
-            while ((input[i] != ' ') && (input[i] != '\n') && (input[i] != '\0'))
+            while (input[i] != '\r')
             {
                 args[j] = input[i];
                 j++;
@@ -87,10 +87,11 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
 {
     int size = strlen(input);
     char **strVal = malloc(sizeof(char *) * nbArgs + 1);
-
+    
     int nbArgsStringLen = (int)((ceil(log10(nbArgs))+1)*sizeof(char));
 
-    char nbArgsString[nbArgsStringLen];
+    char *nbArgsString = malloc(nbArgsStringLen * sizeof(char));
+
     sprintf(nbArgsString, "%d", nbArgsStringLen);
 
     strVal[0] = malloc(sizeof(char) * nbArgsStringLen);
@@ -101,6 +102,8 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
     }
 
     strcpy(strVal[0], nbArgsString);
+    
+    free(nbArgsString);
 
     int currentNb = 0;
     int i = 0;
@@ -141,11 +144,11 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
 
 char **parser(char *input)
 {
-
     int numberOfArgs = getNumberArgs(input);
+    printf("%d\n", numberOfArgs);
     int lenArgs[numberOfArgs];
     getLenArgs(lenArgs, input, numberOfArgs);
-
+    
     char **parsedStr = getStrings(lenArgs, numberOfArgs, input);
 
     return parsedStr;

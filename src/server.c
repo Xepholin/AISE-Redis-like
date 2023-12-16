@@ -97,20 +97,22 @@ int main(int argc, char const *argv[])
                 char buffer[128];
 
                 int size = recv(client_fd, buffer, 127, 0);
+                printf("size: %d\n", size);
 
                 buffer[size] = '\0';
 
-                char * response = command(buffer);
+                char *response = command(buffer);
 
                 if (response != NULL)   {
+                    
                     if (write(client_fd, response, size) != -1) {
-                        // printf("sucess\n");
+                        printf("sucess\n");
                     }
                     else    {
-                        // printf("failed\n");
+                        printf("failed\n");
                     }
 
-                    //free(response);
+                    free(response);
                 }
 
                 // sleep(5);
