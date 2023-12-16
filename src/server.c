@@ -93,9 +93,9 @@ int main(int argc, char const *argv[])
             while (1)
             {
 
-                char buffer[16];
+                char buffer[128];
 
-                int size = recv(client_fd, buffer, 15, 0);
+                int size = recv(client_fd, buffer, 127, 0);
 
                 buffer[size] = '\0';
 
@@ -103,10 +103,10 @@ int main(int argc, char const *argv[])
 
                 if (response != NULL)   {
                     if (write(client_fd, response, size) != -1) {
-                        printf("sucess\n");
+                        // printf("sucess\n");
                     }
                     else    {
-                        printf("failed\n");
+                        // printf("failed\n");
                     }
 
                     free(response);
