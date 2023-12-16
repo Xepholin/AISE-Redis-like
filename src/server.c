@@ -91,36 +91,55 @@ int main(int argc, char const *argv[])
 
         if (pid == 0)
         {
+            int firstIter = 0;
             while (1)
             {
+                if (!firstIter) {
+                    char buffer[128];
 
-                char buffer[128];
+                    int size = recv(client_fd, buffer, 127, 0);
 
-                int size = recv(client_fd, buffer, 127, 0);
-                printf("size: %d\n", size);
-
-                buffer[size] = '\0';
-
-                char *response = command(buffer);
-
-                if (response != NULL)   {
-                    
-                    if (write(client_fd, response, size) != -1) {
-                        printf("sucess\n");
+                    buffer[size] = '\0';
+                        
+                    if (write(client_fd, buffer, size) != -1) {
+                        // printf("sucess\n");
                     }
                     else    {
-                        printf("failed\n");
+                        // printf("failed\n");
                     }
 
-                    free(response);
+                    firstIter++;
                 }
+                else    {
+                    printf("response: begin\n");
+                    char buffer[128];
 
-                // sleep(5);
-                if (!strcmp(buffer, "exit"))
-                {
-                    printf("Socket bye");
-                    close(client_fd);
-                    exit(0);
+                    int size = recv(client_fd, buffer, 127, 0);
+                    printf("input: %s\n", buffer);
+
+                    buffer[size] = '\0';
+
+                    char *response = command(buffer);
+
+                    if (response != NULL)   {
+                        
+                        if (write(client_fd, response, size) != -1) {
+                            // printf("sucess\n");
+                        }
+                        else    {
+                            // printf("failed\n");
+                        }
+                    }
+                    // sleep(5);
+
+                    if (!strcmp(buffer, "*1\r\n$9\r\nexit\r\n"))
+                    {
+                        printf("Socket bye");
+                        close(client_fd);
+                        exit(0);
+                    }
+                    printf("response: end\n");
+                    free(response);
                 }
             }
         }

@@ -16,7 +16,6 @@ void clearBuffer(char *buffer)
 
 int getNumberArgs(char *input)
 {
-    printf("input: %s\n", input);
     char *args = malloc(strlen(input) * sizeof(char) + 1);
 
     for (int i = 0; i < strlen(input); ++i)
@@ -25,7 +24,7 @@ int getNumberArgs(char *input)
         {
             i++;
             int j = 0;
-            while (input[i] != '\r')
+            while ((input[i] != ' ') && (input[i] != '\n') && (input[i] != '\0'))
             {
                 args[j] = input[i];
                 j++;
@@ -145,7 +144,6 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
 char **parser(char *input)
 {
     int numberOfArgs = getNumberArgs(input);
-    printf("%d\n", numberOfArgs);
     int lenArgs[numberOfArgs];
     getLenArgs(lenArgs, input, numberOfArgs);
     
