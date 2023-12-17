@@ -91,7 +91,7 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
 
     char *nbArgsString = malloc(nbArgsStringLen * sizeof(char));
 
-    sprintf(nbArgsString, "%d", nbArgsStringLen);
+    sprintf(nbArgsString, "%d", nbArgs);
 
     strVal[0] = malloc(sizeof(char) * nbArgsStringLen);
 
