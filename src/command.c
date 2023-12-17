@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "../include/parser.h"
 
 #define NOMBRE_ARGS 3
-#define NOMBRE_MAX_COMMANDS_ARGS 10
+#define NOMBRE_MAX_COMMANDS_ARGS 25
 
 #define TAILLE_MAX_NVAR 15
 
 const char *commands[NOMBRE_ARGS][NOMBRE_MAX_COMMANDS_ARGS] = {
     {"1", "PING"},
-    {"2", "GET", "DEL"},
+    {"2", "GET", "DEL", "INCR"},
     {"3", "SET"}};
 
 void free_arrayString(char **parsedStr, int nbArgs)
@@ -22,7 +23,7 @@ void free_arrayString(char **parsedStr, int nbArgs)
     }
 }
 
-int rewriteFile(FILE *fd, char **parsed)
+int rewriteFile(FILE *fd, char *nvar, char *value)
 {
 
     FILE *tempFile = fopen("../temp.txt", "w");
@@ -38,11 +39,8 @@ int rewriteFile(FILE *fd, char **parsed)
     char buffer[fsize];
     fread(buffer, fsize, 1, fd);
 
-    // Regarde si la clef est dans le fichier
-    int findKey = 0;
-
-    char *key = malloc(strlen(parsed[2]) + 3);
-    snprintf(key, sizeof(key), "'%s'", parsed[2]);
+    char *key = malloc(strlen(nvar) + 3);
+    snprintf(key, strlen(nvar) + 3, "'%s'", nvar);
 
     fseek(fd, 0, SEEK_SET);
 
@@ -51,7 +49,7 @@ int rewriteFile(FILE *fd, char **parsed)
         char *substring = strstr(buffer, key);
         if (substring != NULL)
         {
-            fprintf(tempFile, "'%s' %s\n", parsed[2], parsed[3]);
+            fprintf(tempFile, "'%s' %s\n", nvar, value);
         }
         else
         {
@@ -87,11 +85,8 @@ int deleteVariable(FILE *fd, char **parsed)
     char buffer[fsize];
     fread(buffer, fsize, 1, fd);
 
-    // Regarde si la clef est dans le fichier
-    int findKey = 0;
-
     char *key = malloc(strlen(parsed[2]) + 3);
-    snprintf(key, sizeof(key), "'%s'", parsed[2]);
+    snprintf(key, strlen(parsed[2]) + 3, "'%s'", parsed[2]);
 
     fseek(fd, 0, SEEK_SET);
 
@@ -120,7 +115,7 @@ int deleteVariable(FILE *fd, char **parsed)
     return 1;
 }
 
-int fileAppend(char **parsed)
+int fileAppend(char *nvar, char *value)
 {
     FILE *fa = fopen("../data.txt", "a");
 
@@ -129,9 +124,9 @@ int fileAppend(char **parsed)
         return 0;
     }
 
-    if (!isNumber(parsed[2][0]))
+    if (!isNumber(nvar[0]))
     {
-        fprintf(fa, "'%s' %s\n", parsed[2], parsed[3]);
+        fprintf(fa, "'%s' %s\n", nvar, value);
     }
     fclose(fa);
     return 1;
@@ -168,14 +163,18 @@ int findKey(FILE *fd, char **parsed)
     fread(buffer, fsize, 1, fd);
 
     char *key = malloc(strlen(parsed[2]) + 3);
-    snprintf(key, sizeof(key), "'%s'", parsed[2]);
+    snprintf(key, strlen(parsed[2]) + 3, "'%s'", parsed[2]);
 
     fseek(fd, 0, SEEK_SET);
 
     while (fgets(buffer, fsize, fd) != NULL)
     {
+        if (strcmp(buffer, "\n") && fsize == 1)  {
+            break;
+        }
 
         char *substring = strstr(buffer, key);
+
         if (substring != NULL)
         {
             free(key);
@@ -197,7 +196,7 @@ char *getKeyValue(FILE *fd, char **parsed)
     fread(buffer, fsize, 1, fd);
 
     char *key = malloc(strlen(parsed[2]) + 3);
-    snprintf(key, sizeof(key), "'%s'", parsed[2]);
+    snprintf(key, strlen(parsed[2]) + 3, "'%s'", parsed[2]);
 
     fseek(fd, 0, SEEK_SET);
     char *res;
@@ -220,7 +219,7 @@ char *getKeyValue(FILE *fd, char **parsed)
             free(key);
 
             char * response = malloc((sizeof(res) + 6) * sizeof(char));
-            snprintf(response, sizeof(res) + 6, ":%d\r\n\0", atoi(res));
+            snprintf(response, sizeof(res) + 6, ":%d\r\n", atoi(res));
             return response;
         }
     }
@@ -274,15 +273,13 @@ char *command(char *input)
                 break;
 
             case 2:
-                while (commands[0][nb_commands] != NULL)
+                while (commands[1][nb_commands] != NULL)
                 {
                     nb_commands++;
                 }
 
                 for (int j = 1; j <= nb_commands; ++j)
                 {
-
-
                     if (!strcmp(commands[i][j], parsed[1]))
                     {
 
@@ -295,32 +292,104 @@ char *command(char *input)
                             {
                                 return ERROR(parsed);
                             }
+
+                            int boolKey = findKey(fd, parsed);
+
+                            if (boolKey == 0)   {
+                                fclose(fd);
+                                return ERROR(parsed);
+                            }
+
                             char *response = getKeyValue(fd, parsed);
 
                             fclose(fd);
+                            int nbArgs = atoi(parsed[0]) + 1;
+                            free_arrayString(parsed, nbArgs);
+
                             return response;
                         }
                         else if (!strcmp(parsed[1], "DEL"))
                         {
                             FILE *fd = fopen("../data.txt", "r");
+
+                            if (fd == NULL)
+                            {
+                                return ERROR(parsed);
+                            }
+
+                            int boolKey = findKey(fd, parsed);
+
+                            if (boolKey == 0)   {
+                                fclose(fd);
+                                return ERROR(parsed);
+                            }
+
                             deleteVariable(fd, parsed);
                             fclose(fd);
+
                             response = malloc((sizeof(parsed[2]) + 6) * sizeof(char));
                             snprintf(response, sizeof(parsed[2]) + 6, "+Del:%s\r\n", parsed[2]);
+
+                            int nbArgs = atoi(parsed[0]) + 1;
+                            free_arrayString(parsed, nbArgs);
+
                             return response;
+
                         }
+                        else if (!strcmp(parsed[1], "INCR")) {
+                            FILE *fd = fopen("../data.txt", "r");
 
-                        int nbArgs = atoi(parsed[0]) + 1;
-                        free_arrayString(parsed, nbArgs);
+                            if (fd == NULL)
+                            {
+                                return ERROR(parsed);
+                            }
 
-                        return response;
+                            int boolKey = findKey(fd, parsed);
+
+                            if (boolKey == 0)
+                            {
+                                if (fileAppend(parsed[2], "0"))
+                                {
+                                    fclose(fd);
+                                    return OK(parsed);
+                                }
+                                else
+                                {
+                                    fclose(fd);
+                                    return ERROR(parsed);
+                                }
+                            }
+
+                            char *keyValue = getKeyValue(fd, parsed);
+                            keyValue[strcspn(keyValue, "\r\n")] = 0;
+                            memmove(keyValue, keyValue + 1, strlen(keyValue));
+
+                            int varValue = atoi(keyValue);
+                            varValue++;
+
+                            int len = (int)((ceil(log10(varValue))+1)*sizeof(char));
+                            char *string = malloc(len * sizeof(char));
+                            sprintf(string, "%d", varValue);
+
+
+                            if (rewriteFile(fd, parsed[2], string))
+                            {
+                                fclose(fd);
+                                return OK(parsed);
+                            }
+                            else
+                            {
+                                fclose(fd);
+                                return ERROR(parsed);
+                            }
+                        }
                     }
                 }
 
                 break;
 
             case 3:
-                while (commands[0][nb_commands] != NULL)
+                while (commands[2][nb_commands] != NULL)
                 {
                     nb_commands++;
                 }
@@ -343,27 +412,27 @@ char *command(char *input)
 
                             if (boolKey == 0)
                             {
-                                if (fileAppend(parsed))
+                                if (fileAppend(parsed[2], parsed[3]))
                                 {
+                                    fclose(fd);
                                     return OK(parsed);
                                 }
                                 else
                                 {
+                                    fclose(fd);
                                     return ERROR(parsed);
                                 }
+                            }
+                            if (rewriteFile(fd, parsed[2], parsed[3]))
+                            {
+                                fclose(fd);
+                                return OK(parsed);
                             }
                             else
                             {
-                                if (rewriteFile(fd, parsed))
-                                {
-                                    return OK(parsed);
-                                }
-                                else
-                                {
-                                    return ERROR(parsed);
-                                }
+                                fclose(fd);
+                                return ERROR(parsed);
                             }
-                            fclose(fd);
                         }
                     }
                 }
