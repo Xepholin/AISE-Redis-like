@@ -71,6 +71,55 @@ int rewriteFile(FILE *fd, char **parsed)
     return 1;
 }
 
+int deleteVariable(FILE *fd, char **parsed)
+{
+
+    FILE *tempFile = fopen("../temp.txt", "w");
+    if (tempFile == NULL)
+    {
+        return 0;
+    }
+
+    fseek(fd, 0, SEEK_END);
+    long fsize = ftell(fd);
+    fseek(fd, 0, SEEK_SET);
+
+    char buffer[fsize];
+    fread(buffer, fsize, 1, fd);
+
+    // Regarde si la clef est dans le fichier
+    int findKey = 0;
+
+    char *key = malloc(strlen(parsed[2]) + 3);
+    snprintf(key, sizeof(key), "'%s'", parsed[2]);
+
+    fseek(fd, 0, SEEK_SET);
+
+    while (fgets(buffer, fsize, fd) != NULL)
+    {
+        char *substring = strstr(buffer, key);
+        if (substring != NULL)
+        {
+            continue;
+        }
+        else
+        {
+            fprintf(tempFile, "%s", buffer);
+        }
+    }
+
+    fclose(tempFile);
+    free(key);
+
+    if (rename("../temp.txt", "../data.txt") != 0)
+    {
+        printf("Erreur rewrite\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 int fileAppend(char **parsed)
 {
     FILE *fa = fopen("../data.txt", "a");
@@ -137,6 +186,52 @@ int findKey(FILE *fd, char **parsed)
     return 0;
 }
 
+char *getKeyValue(FILE *fd, char **parsed)
+{
+
+    fseek(fd, 0, SEEK_END);
+    long fsize = ftell(fd);
+    fseek(fd, 0, SEEK_SET);
+
+    char buffer[fsize];
+    fread(buffer, fsize, 1, fd);
+
+    char *key = malloc(strlen(parsed[2]) + 3);
+    snprintf(key, sizeof(key), "'%s'", parsed[2]);
+
+    fseek(fd, 0, SEEK_SET);
+    char *res;
+
+    while (fgets(buffer, fsize, fd) != NULL)
+    {
+
+        char *substring = strstr(buffer, key);
+        if (substring != NULL)
+        {
+            res = malloc(strlen(buffer) - strlen(key));
+            int i = strlen(key) + 1;
+            int j = 0;
+            while (isNumber(buffer[i]))
+            {
+                res[j] = buffer[i];
+                j++;
+                i++;
+            }
+            free(key);
+
+            char * response = malloc((sizeof(res) + 6) * sizeof(char));
+            snprintf(response, sizeof(res) + 6, ":%d\r\n\0", atoi(res));
+            return response;
+        }
+    }
+
+    free(key);
+
+    res = malloc((strlen("+NOT_FOUND\r\n") + 1) * sizeof(char));
+    strcpy(res, "+NOT_FOUND\r\n");
+
+    return res;
+}
 
 char *command(char *input)
 {
@@ -184,23 +279,35 @@ char *command(char *input)
                     nb_commands++;
                 }
 
-                for (int j = 1; j < nb_commands; ++j)
+                for (int j = 1; j <= nb_commands; ++j)
                 {
+
+
                     if (!strcmp(commands[i][j], parsed[1]))
                     {
+
                         if (!strcmp(parsed[1], "GET"))
                         {
+
                             FILE *fd = fopen("../data.txt", "r");
 
                             if (fd == NULL)
                             {
                                 return ERROR(parsed);
                             }
-                            // findKey
+                            char *response = getKeyValue(fd, parsed);
+
                             fclose(fd);
+                            return response;
                         }
                         else if (!strcmp(parsed[1], "DEL"))
                         {
+                            FILE *fd = fopen("../data.txt", "r");
+                            deleteVariable(fd, parsed);
+                            fclose(fd);
+                            response = malloc((sizeof(parsed[2]) + 6) * sizeof(char));
+                            snprintf(response, sizeof(parsed[2]) + 6, "+Del:%s\r\n", parsed[2]);
+                            return response;
                         }
 
                         int nbArgs = atoi(parsed[0]) + 1;
