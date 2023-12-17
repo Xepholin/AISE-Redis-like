@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
 #include "../include/parser.h"
 
 #define NOMBRE_ARGS 3
@@ -12,8 +11,7 @@
 const char *commands[NOMBRE_ARGS][NOMBRE_MAX_COMMANDS_ARGS] = {
     {"1", "PING"},
     {"2", "GET", "DEL"},
-    {"3", "SET"}
-};
+    {"3", "SET"}};
 
 void free_arrayString(char **parsedStr, int nbArgs)
 {
@@ -24,214 +22,241 @@ void free_arrayString(char **parsedStr, int nbArgs)
     }
 }
 
-char *command(char *input) {
+int rewriteFile(FILE *fd, char **parsed)
+{
+
+    FILE *tempFile = fopen("../temp.txt", "w");
+    if (tempFile == NULL)
+    {
+        return 0;
+    }
+
+    fseek(fd, 0, SEEK_END);
+    long fsize = ftell(fd);
+    fseek(fd, 0, SEEK_SET);
+
+    char buffer[fsize];
+    fread(buffer, fsize, 1, fd);
+
+    // Regarde si la clef est dans le fichier
+    int findKey = 0;
+
+    char *key = malloc(strlen(parsed[2]) + 3);
+    snprintf(key, sizeof(key), "'%s'", parsed[2]);
+
+    fseek(fd, 0, SEEK_SET);
+
+    while (fgets(buffer, fsize, fd) != NULL)
+    {
+        char *substring = strstr(buffer, key);
+        if (substring != NULL)
+        {
+            fprintf(tempFile, "'%s' %s\n", parsed[2], parsed[3]);
+        }
+        else
+        {
+            fprintf(tempFile, "%s", buffer);
+        }
+    }
+
+    fclose(tempFile);
+    free(key);
+
+    if (rename("../temp.txt", "../data.txt") != 0)
+    {
+        printf("Erreur rewrite\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+int fileAppend(char **parsed)
+{
+    FILE *fa = fopen("../data.txt", "a");
+
+    if (fa == NULL)
+    {
+        return 0;
+    }
+
+    if (!isNumber(parsed[2][0]))
+    {
+        fprintf(fa, "'%s' %s\n", parsed[2], parsed[3]);
+    }
+    fclose(fa);
+    return 1;
+}
+char *ERROR(char **parsed)
+{
+
+    char *response = malloc((strlen("+ERROR\r\n") + 1) * sizeof(char));
+    strcpy(response, "+ERROR\r\n");
+    int nbArgs = atoi(parsed[0]) + 1;
+    free_arrayString(parsed, nbArgs);
+    return response;
+}
+
+char *OK(char **parsed)
+{
+    char *response = malloc((strlen("+OK\r\n") + 1) * sizeof(char));
+    strcpy(response, "+OK\r\n");
+    int nbArgs = atoi(parsed[0]) + 1;
+    free_arrayString(parsed, nbArgs);
+    return response;
+}
+
+int findKey(FILE *fd, char **parsed)
+{
+
+    // char *buffer = malloc((fsize + strlen(parsed[2]) + strlen(parsed[3])) * sizeof(char));
+
+    fseek(fd, 0, SEEK_END);
+    long fsize = ftell(fd);
+    fseek(fd, 0, SEEK_SET);
+
+    char buffer[fsize];
+    fread(buffer, fsize, 1, fd);
+
+    char *key = malloc(strlen(parsed[2]) + 3);
+    snprintf(key, sizeof(key), "'%s'", parsed[2]);
+
+    fseek(fd, 0, SEEK_SET);
+
+    while (fgets(buffer, fsize, fd) != NULL)
+    {
+
+        char *substring = strstr(buffer, key);
+        if (substring != NULL)
+        {
+            free(key);
+            return 1;
+        }
+    }
+    free(key);
+    return 0;
+}
+
+
+char *command(char *input)
+{
 
     char **parsed = parser(input);
     char *response = NULL;
-    
-    for (int i = 0; i < NOMBRE_ARGS; ++i)   {
 
-        if (atoi(parsed[0]) == atoi(commands[i][0]))    {
+    for (int i = 0; i < NOMBRE_ARGS; ++i)
+    {
+
+        if (atoi(parsed[0]) == atoi(commands[i][0]))
+        {
             int nb_commands = 0;
 
             switch (atoi(parsed[0]))
             {
             case 1:
-                while (commands[0][nb_commands] != NULL) {
+                while (commands[0][nb_commands] != NULL)
+                {
                     nb_commands++;
                 }
 
-                for (int j = 1; j < nb_commands; ++j)  {
-                    if (!strcmp(commands[i][j], parsed[1]))   {
-                        if (!strcmp(parsed[1], "PING"))  {
+                for (int j = 1; j < nb_commands; ++j)
+                {
+                    if (!strcmp(commands[i][j], parsed[1]))
+                    {
+                        if (!strcmp(parsed[1], "PING"))
+                        {
                             response = malloc((strlen("+PONG\r\n") + 1) * sizeof(char));
                             strcpy(response, "+PONG\r\n");
                         }
 
-                        int nbArgs = atoi(parsed[0])+1;
+                        int nbArgs = atoi(parsed[0]) + 1;
                         free_arrayString(parsed, nbArgs);
 
                         return response;
                     }
-                    
                 }
 
                 break;
-            
+
             case 2:
-                while (commands[0][nb_commands] != NULL) {
+                while (commands[0][nb_commands] != NULL)
+                {
                     nb_commands++;
                 }
 
-                for (int j = 1; j < nb_commands; ++j)  {
-                    if (!strcmp(commands[i][j], parsed[1]))   {
-                        if (!strcmp(parsed[1], "GET"))  {
-                            
-                        }
-                        else if (!strcmp(parsed[1], "DEL"))  {
-
-                        }
-
-                        int nbArgs = atoi(parsed[0])+1;
-                        free_arrayString(parsed, nbArgs);
-
-                        return response;
-                    }
-                }
-
-                break;
-            
-            case 3:
-                while (commands[0][nb_commands] != NULL) {
-                    nb_commands++;
-                }
-
-                for (int j = 1; j < nb_commands; ++j)  {
-                    if (!strcmp(commands[i][j], parsed[1]))   {
-                        if (!strcmp(parsed[1], "SET"))  {
+                for (int j = 1; j < nb_commands; ++j)
+                {
+                    if (!strcmp(commands[i][j], parsed[1]))
+                    {
+                        if (!strcmp(parsed[1], "GET"))
+                        {
                             FILE *fd = fopen("../data.txt", "r");
 
-                            if (fd == NULL) {
-                                response = malloc((strlen("+ERROR\r\n") + 1) * sizeof(char));
-                                strcpy(response, "+ERROR\r\n");
-
-                                int nbArgs = atoi(parsed[0])+1;
-                                free_arrayString(parsed, nbArgs);
-
-                                return response;
+                            if (fd == NULL)
+                            {
+                                return ERROR(parsed);
                             }
-                            
-                            fseek(fd, 0, SEEK_END);
-                            long fsize = ftell(fd);
-                            fseek(fd, 0, SEEK_SET);
-
-                            char *buffer = malloc((fsize + 1 + strlen(parsed[3])) * sizeof(char));
-                            fread(buffer, fsize, 1, fd);
+                            // findKey
                             fclose(fd);
+                        }
+                        else if (!strcmp(parsed[1], "DEL"))
+                        {
+                        }
 
-                            buffer[fsize] = '\0';
+                        int nbArgs = atoi(parsed[0]) + 1;
+                        free_arrayString(parsed, nbArgs);
 
-                            char *word = malloc(TAILLE_MAX_NVAR * sizeof(char));
-                            int j = 0;
-                            int search = 1;
+                        return response;
+                    }
+                }
 
-                            for (int i = 0; i < strlen(buffer); ++i)    {
-                                if (search) {
-                                    if (buffer[i] == ' ')  {
-                                        word[j] = '\0';
+                break;
 
-                                        if (!strcmp(parsed[2], word)) {
-                                            i++;
-                                            int k = i;
+            case 3:
+                while (commands[0][nb_commands] != NULL)
+                {
+                    nb_commands++;
+                }
 
-                                            char *newFile = malloc((fsize + 1 + strlen(parsed[3])) * sizeof(char));
+                for (int j = 1; j < nb_commands; ++j)
+                {
+                    if (!strcmp(commands[i][j], parsed[1]))
+                    {
+                        if (!strcmp(parsed[1], "SET"))
+                        {
 
-                                            memcpy(newFile, buffer, k);
+                            FILE *fd = fopen("../data.txt", "r");
 
-                                            for (int j = 0; j < strlen(parsed[3]); ++j) {
-                                                newFile[k] = parsed[3][j];
-                                                k++;
-                                            }
-                                            newFile[k] = '\n';
-                                            k++;
+                            if (fd == NULL)
+                            {
+                                return ERROR(parsed);
+                            }
 
-                                            while (buffer[i] != '\n')   {
-                                                i++;
-                                            }
+                            int boolKey = findKey(fd, parsed);
 
-                                            i++;
-                                            while (buffer[i] != '\0')   {
-                                                newFile[k] = buffer[i];
-                                                k++;
-                                                i++;
-                                            }
-                                            newFile[k] = '\0';
-
-                                            FILE *fd = fopen("../data.txt", "w");
-
-                                            if (fd == NULL) {
-                                                fclose(fd);
-                                                response = malloc((strlen("+ERROR\r\n") + 1) * sizeof(char));
-                                                strcpy(response, "+ERROR\r\n");
-
-                                                int nbArgs = atoi(parsed[0])+1;
-                                                free_arrayString(parsed, nbArgs);
-
-                                                return response;
-                                            }
-
-                                            fputs(newFile, fd);
-                                            fclose(fd);
-                                            free(newFile);
-                                            free(buffer);
-                                            free(word);
-
-                                            response = malloc((strlen("+OK\r\n") + 1) * sizeof(char));
-                                            strcpy(response, "+OK\r\n");
-
-                                            int nbArgs = atoi(parsed[0])+1;
-                                            free_arrayString(parsed, nbArgs);
-
-                                            return response;
-                                        }
-                                        else    {
-                                            for (int k = 0; k < j; ++k) {
-                                                word[k] = '\0';
-                                            }
-                                        }
-                                        j = 0;
-                                        search = 0;
-                                        continue;
-                                    }
-                                    word[j] = buffer[i];
-                                    j++;
+                            if (boolKey == 0)
+                            {
+                                if (fileAppend(parsed))
+                                {
+                                    return OK(parsed);
                                 }
-                                else    {
-                                    if (buffer[i] == '\n')  {
-                                        search = 1;
-                                    }
+                                else
+                                {
+                                    return ERROR(parsed);
                                 }
                             }
-                            free(buffer);
-                            free(word);
-
-                            FILE *fp = fopen("../data.txt", "a");
-                            
-                            if (fp == NULL) {
-                                response = malloc((strlen("+ERROR\r\n") + 1) * sizeof(char));
-                                strcpy(response, "+ERROR\r\n");
-
-                                int nbArgs = atoi(parsed[0])+1;
-                                free_arrayString(parsed, nbArgs);
-
-                                return response;
+                            else
+                            {
+                                if (rewriteFile(fd, parsed))
+                                {
+                                    return OK(parsed);
+                                }
+                                else
+                                {
+                                    return ERROR(parsed);
+                                }
                             }
-
-                            if (!isNumber(parsed[2][0]))    {
-                                fprintf(fp, "%s %s\n", parsed[2], parsed[3]);
-                                fclose(fp);
-
-                                response = malloc((strlen("+OK\r\n") + 1) * sizeof(char));
-                                strcpy(response, "+OK\r\n");
-
-                                int nbArgs = atoi(parsed[0])+1;
-                                free_arrayString(parsed, nbArgs);
-
-                                return response;
-                            }
-                            else    {
-                                fclose(fp);
-
-                                response = malloc((strlen("+ERROR\r\n") + 1) * sizeof(char));
-                                strcpy(response, "+ERROR\r\n");
-
-                                int nbArgs = atoi(parsed[0])+1;
-                                free_arrayString(parsed, nbArgs);
-
-                                return response;
-                            }
-
-                            fclose(fp);
+                            fclose(fd);
                         }
                     }
                 }
@@ -248,7 +273,7 @@ char *command(char *input) {
     response = malloc((strlen("+NOT_FOUND\r\n") + 1) * sizeof(char));
     strcpy(response, "+NOT_FOUND\r\n");
 
-    int nbArgs = atoi(parsed[0])+1;
+    int nbArgs = atoi(parsed[0]) + 1;
     free_arrayString(parsed, nbArgs);
     return response;
 }
