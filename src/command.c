@@ -11,7 +11,7 @@
 
 const char *commands[NOMBRE_ARGS][NOMBRE_MAX_COMMANDS_ARGS] = {
     {"1", "PING"},
-    {"2", "GET", "DEL", "INCR"},
+    {"2", "GET", "DEL", "INCR", "DECR"},
     {"3", "SET"}};
 
 void free_arrayString(char **parsedStr, int nbArgs)
@@ -169,7 +169,8 @@ int findKey(FILE *fd, char **parsed)
 
     while (fgets(buffer, fsize, fd) != NULL)
     {
-        if (strcmp(buffer, "\n") && fsize == 1)  {
+        if (strcmp(buffer, "\n") && fsize == 1)
+        {
             break;
         }
 
@@ -218,8 +219,9 @@ char *getKeyValue(FILE *fd, char **parsed)
             }
             free(key);
 
-            char * response = malloc((sizeof(res) + 6) * sizeof(char));
-            snprintf(response, sizeof(res) + 6, ":%d\r\n", atoi(res));
+            char *response = malloc((sizeof(res) + 4) * sizeof(char));
+            snprintf(response, sizeof(res) + 4, ":%d\r\n", atoi(res));
+            free(res);
             return response;
         }
     }
@@ -295,7 +297,8 @@ char *command(char *input)
 
                             int boolKey = findKey(fd, parsed);
 
-                            if (boolKey == 0)   {
+                            if (boolKey == 0)
+                            {
                                 fclose(fd);
                                 return ERROR(parsed);
                             }
@@ -319,7 +322,8 @@ char *command(char *input)
 
                             int boolKey = findKey(fd, parsed);
 
-                            if (boolKey == 0)   {
+                            if (boolKey == 0)
+                            {
                                 fclose(fd);
                                 return ERROR(parsed);
                             }
@@ -334,9 +338,9 @@ char *command(char *input)
                             free_arrayString(parsed, nbArgs);
 
                             return response;
-
                         }
-                        else if (!strcmp(parsed[1], "INCR")) {
+                        else if (!strcmp(parsed[1], "INCR"))
+                        {
                             FILE *fd = fopen("../data.txt", "r");
 
                             if (fd == NULL)
@@ -366,19 +370,71 @@ char *command(char *input)
 
                             int varValue = atoi(keyValue);
                             varValue++;
+                            free(keyValue);
 
-                            int len = (int)((ceil(log10(varValue))+1)*sizeof(char));
+                            int len = (int)((ceil(log10(varValue)) + 1) * sizeof(char));
                             char *string = malloc(len * sizeof(char));
                             sprintf(string, "%d", varValue);
 
-
                             if (rewriteFile(fd, parsed[2], string))
                             {
+                                free(string);
                                 fclose(fd);
                                 return OK(parsed);
                             }
                             else
                             {
+                                free(string);
+                                fclose(fd);
+                                return ERROR(parsed);
+                            }
+                        }
+                        else if (!strcmp(parsed[1], "DECR"))
+                        {
+                            FILE *fd = fopen("../data.txt", "r");
+
+                            if (fd == NULL)
+                            {
+                                return ERROR(parsed);
+                            }
+
+                            int boolKey = findKey(fd, parsed);
+
+                            if (boolKey == 0)
+                            {
+                                if (fileAppend(parsed[2], "0"))
+                                {
+                                    fclose(fd);
+                                    return OK(parsed);
+                                }
+                                else
+                                {
+                                    fclose(fd);
+                                    return ERROR(parsed);
+                                }
+                            }
+
+                            char *keyValue = getKeyValue(fd, parsed);
+                            keyValue[strcspn(keyValue, "\r\n")] = 0;
+                            memmove(keyValue, keyValue + 1, strlen(keyValue));
+
+                            int varValue = atoi(keyValue);
+                            varValue--;
+                            free(keyValue);
+
+                            int len = (int)((ceil(log10(varValue)) + 1) * sizeof(char));
+                            char *string = malloc(len * sizeof(char));
+                            sprintf(string, "%d", varValue);
+
+                            if (rewriteFile(fd, parsed[2], string))
+                            {
+                                free(string);
+                                fclose(fd);
+                                return OK(parsed);
+                            }
+                            else
+                            {
+                                free(string);
                                 fclose(fd);
                                 return ERROR(parsed);
                             }

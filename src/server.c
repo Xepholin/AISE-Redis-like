@@ -91,26 +91,31 @@ int main(int argc, char const *argv[])
 
         if (pid == 0)
         {
+            printf("+1\n");
             int firstIter = 0;
             while (1)
             {
-                if (!firstIter) {
+                if (!firstIter)
+                {
                     char buffer[128];
 
                     int size = recv(client_fd, buffer, 127, 0);
 
                     buffer[size] = '\0';
-                        
-                    if (write(client_fd, buffer, size) != -1) {
+
+                    if (write(client_fd, buffer, size) != -1)
+                    {
                         // printf("sucess\n");
                     }
-                    else    {
+                    else
+                    {
                         // printf("failed\n");
                     }
 
                     firstIter++;
                 }
-                else    {
+                else
+                {
                     char buffer[128];
 
                     int size = recv(client_fd, buffer, 127, 0);
@@ -119,12 +124,15 @@ int main(int argc, char const *argv[])
 
                     char *response = command(buffer);
 
-                    if (response != NULL)   {
-                        
-                        if (write(client_fd, response, strlen(response)) != -1) {
+                    if (response != NULL)
+                    {
+
+                        if (write(client_fd, response, strlen(response)) != -1)
+                        {
                             // printf("sucess\n");
                         }
-                        else    {
+                        else
+                        {
                             // printf("failed\n");
                         }
                     }
@@ -132,7 +140,7 @@ int main(int argc, char const *argv[])
 
                     if (!strcmp(buffer, "*1\r\n$9\r\nexit\r\n"))
                     {
-                        printf("Socket bye");
+                        printf("Bye\n");
                         close(client_fd);
                         exit(0);
                     }

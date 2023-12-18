@@ -86,8 +86,8 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
 {
     int size = strlen(input);
     char **strVal = malloc(sizeof(char *) * nbArgs + 1);
-    
-    int nbArgsStringLen = (int)((ceil(log10(nbArgs))+1)*sizeof(char));
+
+    int nbArgsStringLen = (int)((ceil(log10(nbArgs)) + 1) * sizeof(char));
 
     char *nbArgsString = malloc(nbArgsStringLen * sizeof(char));
 
@@ -95,19 +95,19 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
 
     strVal[0] = malloc(sizeof(char) * nbArgsStringLen);
 
-    for (int i = 1; i < nbArgs+1; ++i)
+    for (int i = 1; i < nbArgs + 1; ++i)
     {
-        strVal[i] = malloc(sizeof(char) * (lenArgs[i-1] + 1));
+        strVal[i] = malloc(sizeof(char) * (lenArgs[i - 1] + 1));
     }
 
     strcpy(strVal[0], nbArgsString);
-    
+
     free(nbArgsString);
 
     int currentNb = 0;
     int i = 0;
 
-    while ((currentNb < nbArgs+1) && (i < size))
+    while ((currentNb < nbArgs + 1) && (i < size))
     {
         if (input[i] == '$')
         {
@@ -132,8 +132,8 @@ char **getStrings(int *lenArgs, int nbArgs, char *input)
             }
             tmp[lenArgs[currentNb]] = '\0';
 
-            strcpy(strVal[currentNb+1], tmp);
-
+            strcpy(strVal[currentNb + 1], tmp);
+            free(tmp);
             currentNb++;
         }
         i++;
@@ -146,7 +146,7 @@ char **parser(char *input)
     int numberOfArgs = getNumberArgs(input);
     int lenArgs[numberOfArgs];
     getLenArgs(lenArgs, input, numberOfArgs);
-    
+
     char **parsedStr = getStrings(lenArgs, numberOfArgs, input);
 
     return parsedStr;
