@@ -11,7 +11,7 @@
 
 const char *commands[NOMBRE_ARGS][NOMBRE_MAX_COMMANDS_ARGS] = {
     {"1", "PING"},
-    {"2", "GET", "DEL", "INCR", "DECR"},
+    {"2", "PING", "GET", "DEL", "INCR", "DECR"},
     {"3", "SET"}};
 
 void free_arrayString(char **parsedStr, int nbArgs)
@@ -263,12 +263,12 @@ char *command(char *input)
                         {
                             response = malloc((strlen("+PONG\r\n") + 1) * sizeof(char));
                             strcpy(response, "+PONG\r\n");
+
+                            int nbArgs = atoi(parsed[0]) + 1;
+                            free_arrayString(parsed, nbArgs);
+
+                            return response;
                         }
-
-                        int nbArgs = atoi(parsed[0]) + 1;
-                        free_arrayString(parsed, nbArgs);
-
-                        return response;
                     }
                 }
 
@@ -284,8 +284,17 @@ char *command(char *input)
                 {
                     if (!strcmp(commands[i][j], parsed[1]))
                     {
+                        if (!strcmp(parsed[1], "PING"))
+                        {
+                            response = malloc((strlen(parsed[2]) + 4) * sizeof(char));
+                            sprintf(response, "+%s\r\n", parsed[2]);
 
-                        if (!strcmp(parsed[1], "GET"))
+                            int nbArgs = atoi(parsed[0]) + 1;
+                            free_arrayString(parsed, nbArgs);
+
+                            return response;
+                        }
+                        else if (!strcmp(parsed[1], "GET"))
                         {
 
                             FILE *fd = fopen("../data.txt", "r");
